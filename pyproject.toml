@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "storytrack"
+version = "0.1.0"
+description = "Visualise hiking/running/cycling routes with geotagged photos."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W"] # E=pycodestyle errors, F=pyflakes, W=pycodestyle warnings
