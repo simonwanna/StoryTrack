@@ -24,14 +24,31 @@ jobs:
     - name: Run Ruff linter
       run: ruff check .
 
-  smoke-test-spark-image:
+  smoke-test-all-images:
     runs-on: ubuntu-latest
     needs: lint
     steps:
     - uses: actions/checkout@v4
-    - name: Build Spark Docker image
-      run: docker build . --file spark.Dockerfile --tag spark-gpx:test
-    - name: Run container and import packages
+    # Test the base image
+    - name: Build Base Docker image
+      run: docker build --file base.Dockerfile --tag storytrack-base:latest .
+    - name: Test base image imports
       run: >
-        docker run --rm spark-gpx:test
-        python -c "import pandas; import pyspark; from delta import configure_spark_with_delta_pip; import gpxpy; import dash; print('Imports successful!')"
+        docker run --rm storytrack-base:latest
+        python -c "import pandas; import pyspark; from delta import configure_spark_with_delta_pip; import gpxpy; import dash; print('Base image imports successful!')"
+
+    # Test the process image
+    - name: Build Process Docker image
+      run: docker build --file process.Dockerfile --tag process:test .
+    - name: Test process image imports
+      run: >
+        docker run --rm process:test
+        python -c "import gpxpy, pandas, pyspark; from delta import configure_spark_with_delta_pip; print('Process image imports successful!')"
+
+    # Test the app image
+    - name: Build App Docker image
+      run: docker build --file app.Dockerfile --tag app:test .
+    - name: Test app image imports
+      run: >
+        docker run --rm app:test
+        python -c "import dash, pyspark; import plotly.express as px; from delta import configure_spark_with_delta_pip; print('App image imports successful!')"

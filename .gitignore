@@ -1,3 +1,6 @@
+**/__pycache__/
 .git
 tmp/
 gpx_files/
+output/
+.ruff_cache/
