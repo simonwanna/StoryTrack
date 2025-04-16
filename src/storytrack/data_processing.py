@@ -15,7 +15,7 @@ point_schema = T.StructType(
         T.StructField("longitude", T.DoubleType(), True),
         T.StructField("elevation", T.DoubleType(), True),
         T.StructField("time", T.TimestampType(), True),
-        T.StructField("speed", T.DoubleType(), True)
+        T.StructField("speed", T.DoubleType(), True),
     ]
 )
 
@@ -38,7 +38,7 @@ def parse_gpx_pd(pdf_iter):
                             speed = speed * 3.6
                         else:
                             speed = 0.0
-                        
+
                         all_records.append(
                             {
                                 "run_id": run_id,
@@ -46,28 +46,19 @@ def parse_gpx_pd(pdf_iter):
                                 "longitude": point.longitude,
                                 "elevation": point.elevation,
                                 "time": point.time,
-                                "speed": speed
+                                "speed": speed,
                             }
                         )
         yield pd.DataFrame(all_records)
 
 
-if __name__ == '__main__':
-    # SparkSession with Delta support
-    builder = (
-        SparkSession.builder.appName("GPX Processing with Pandas UDF")
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    )
-
-    spark = configure_spark_with_delta_pip(builder).getOrCreate()
-
-    gpx_files = os.listdir("gpx_files")
+def process_gpx_files(spark, gpx_dir, out_dir):
+    gpx_files = os.listdir(gpx_dir)
     file_paths = []
     for f in gpx_files:
         if f.endswith(".gpx"):
-            file_paths.append((f.split(".")[0], os.path.join("gpx_files", f)))
-    
+            file_paths.append((f.split(".")[0], os.path.join(gpx_dir, f)))
+
     # if you want only specific files
     # file_paths = [
     #     ("run_04_07_24", "gpx_files/run_04_07_24.gpx"),
@@ -81,7 +72,30 @@ if __name__ == '__main__':
     df_points = df_paths.mapInPandas(parse_gpx_pd, schema=point_schema)
 
     # Save to delta
-    df_points.write.format("delta").mode("overwrite").save("tmp/gpx_points")
+    df_points.write.format("delta").mode("overwrite").save(out_dir)
 
-    print("\033[92m" + "GPX points written to Delta table." + "\033[0m")    
+    print("\033[92m" + "GPX points written to Delta table." + "\033[0m")
     spark.stop()
+
+
+def get_spark_session():
+    builder = (
+        SparkSession.builder.appName("GPX Processing with Pandas UDF")
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    )
+
+    spark = configure_spark_with_delta_pip(builder).getOrCreate()
+
+    return spark
+
+
+def main():
+    spark = get_spark_session()
+    process_gpx_files(spark, gpx_dir="gpx_files", out_dir="tmp/gpx_points")
+    spark.stop()
+
+
+if __name__ == "__main__":
+    # SparkSession with Delta support
+    main()
