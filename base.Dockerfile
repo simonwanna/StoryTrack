@@ -2,15 +2,21 @@ FROM ubuntu:22.04
 
 WORKDIR /app
 
-# Update + install system dependencies
-# Need python3, pip, and build-essential for compiling packages like pandas
+# Prevent tzdata from asking for input
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Basic system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv python3-dev \
     build-essential \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Additional dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl \
     openjdk-11-jre-headless \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    tzdata \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME environment variable
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
