@@ -1,7 +1,8 @@
 # Reads from delta and visualise in plotly dash app
+import os
 
-from dash import dcc, html
-import dash
+from dash import dcc, html, Dash
+import dash_mantine_components as dmc
 
 from delta_reader import load_data
 from dash_components import dash_figure
@@ -9,18 +10,17 @@ from dash_components import dash_figure
 
 def run_dash_app(df):
     # Visualise runs
-    app = dash.Dash(__name__)
+    app = Dash(__name__, assets_folder=os.path.join(os.getcwd(), "assets"))
 
     fig = dash_figure(df)
 
-    app.layout = html.Div(
-        children=[
-            dcc.Graph(
-                figure=fig,
-                style={"height": "100vh", "width": "100vw"},  # full viewport
-            )
-        ],
-        style={"margin": 0, "padding": 0, "height": "100vh", "width": "100vw"},
+    app.layout = dmc.MantineProvider(
+        dmc.Grid(
+            children=[dmc.GridCol(html.Div(dcc.Graph(figure=fig, className="graph"), className="graph-div"), span=8)],
+            justify="center",
+            align="stretch",
+            gutter="0px",
+        )
     )
 
     app.run(debug=False, host="0.0.0.0", port=8050)

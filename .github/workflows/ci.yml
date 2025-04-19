@@ -29,6 +29,7 @@ jobs:
     needs: lint
     steps:
     - uses: actions/checkout@v4
+
     # Test the base image
     - name: Build Base Docker image
       run: docker build --file base.Dockerfile --tag storytrack-base:latest .
@@ -51,4 +52,4 @@ jobs:
     - name: Test app image imports
       run: >
         docker run --rm app:test
-        python -c "import dash, pyspark; import plotly.express as px; from delta import configure_spark_with_delta_pip; print('App image imports successful!')"
+        python -c "import dash, dash_mantine_components, pyspark; import plotly.express as px; from delta import configure_spark_with_delta_pip; print('App image imports successful!')"
